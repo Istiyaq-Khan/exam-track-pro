@@ -341,4 +341,4 @@ function validateSettings(settings) {
   }
   
   return errors;
-}
+} 

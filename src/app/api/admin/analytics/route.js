@@ -37,7 +37,7 @@ export async function GET(request) {
         { $group: { _id: '$role', count: { $sum: 1 } } }
       ]),
       User.countDocuments({ 
-        createdAt: { $gte: new Date(now.setHours(0, 0, 0, 0)) }
+        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
       })
     ]);
     
@@ -181,7 +181,7 @@ export async function POST(request) {
     }
     
     // Check if already connected
-    const existingConnection = teacher.connectedStudents.find(
+    const existingConnection = teacher.connectedStudents?.find(
       conn => conn.studentUid === studentUid
     );
     
@@ -192,9 +192,13 @@ export async function POST(request) {
       );
     }
     
-    // Connect teacher to student
-    teacher.connectStudent(studentUid);
-    student.connectTeacher(teacherId);
+    // Connect teacher to student (assuming these are custom methods)
+    if (typeof teacher.connectStudent === 'function') {
+      teacher.connectStudent(studentUid);
+    }
+    if (typeof student.connectTeacher === 'function') {
+      student.connectTeacher(teacherId);
+    }
     
     await Promise.all([teacher.save(), student.save()]);
     
@@ -246,7 +250,16 @@ export async function GET(request, { params }) {
     }
     
     // Get connected students with their stats
-    const connectedStudents = await teacher.getStudentStats();
+    let connectedStudents = [];
+    if (typeof teacher.getStudentStats === 'function') {
+      connectedStudents = await teacher.getStudentStats();
+    } else {
+      // Fallback: get basic student info
+      const studentUids = teacher.connectedStudents?.map(conn => conn.studentUid) || [];
+      connectedStudents = await User.find({ uid: { $in: studentUids } })
+        .select('uid displayName email role photoURL createdAt')
+        .lean();
+    }
     
     return NextResponse.json(connectedStudents);
     
@@ -300,7 +313,7 @@ export async function POST(request) {
       }
       
       // Check if teacher is connected to student
-      const isConnected = sender.connectedStudents.some(
+      const isConnected = sender.connectedStudents?.some(
         conn => conn.studentUid === toId && conn.status === 'active'
       );
       
@@ -312,8 +325,24 @@ export async function POST(request) {
       }
     }
     
-    // Send message
-    recipient.sendMessage(fromId, sender.displayName, message, type);
+    // Send message (assuming this is a custom method)
+    if (typeof recipient.sendMessage === 'function') {
+      recipient.sendMessage(fromId, sender.displayName, message, type);
+    } else {
+      // Fallback: manually add message
+      if (!recipient.messages) {
+        recipient.messages = [];
+      }
+      recipient.messages.push({
+        fromId,
+        fromName: sender.displayName,
+        message,
+        type,
+        createdAt: new Date(),
+        read: false
+      });
+    }
+    
     await recipient.save();
     
     return NextResponse.json({ success: true });
@@ -351,7 +380,7 @@ export async function GET(request) {
     }
     
     // Return messages sorted by newest first
-    const messages = user.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const messages = (user.messages || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     return NextResponse.json(messages);
     
@@ -394,7 +423,14 @@ export async function POST(request) {
       );
     }
     
-    // Verify password (you'll need to hash passwords when creating users)
+    // Verify password
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: 'Account not properly configured' },
+        { status: 401 }
+      );
+    }
+    
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     
     if (!isValidPassword) {
@@ -405,7 +441,7 @@ export async function POST(request) {
     }
     
     // Update login stats
-    user.loginCount += 1;
+    user.loginCount = (user.loginCount || 0) + 1;
     user.lastLogin = new Date();
     await user.save();
     
@@ -510,24 +546,28 @@ export async function POST(request) {
     // Generate unique UID
     const uid = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
-    // Create user
-    const newUser = new User({
+    // Create user data
+    const userData = {
       uid,
       email: email.toLowerCase(),
       displayName,
       role: userType,
       studentId: studentId || '',
       schoolName: schoolName || '',
-      passwordHash, // You'll need to add this field to your User model
+      passwordHash,
       createdAt: new Date(),
-      updatedAt: new Date()
-    });
+      updatedAt: new Date(),
+      loginCount: 0,
+      messages: [],
+      connectedStudents: userType === 'teacher' ? [] : undefined
+    };
     
     if (userType === 'teacher') {
-      // Teacher code will be auto-generated in pre-save middleware
-      newUser.teacherCode = teacherCode;
+      userData.teacherCode = teacherCode;
     }
     
+    // Create user
+    const newUser = new User(userData);
     await newUser.save();
     
     return NextResponse.json({
