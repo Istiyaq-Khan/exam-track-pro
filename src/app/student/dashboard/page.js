@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import Navigation from '../../../components/Navigation';
+import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { 
   ChartBarIcon,
   BookOpenIcon,
@@ -11,7 +12,6 @@ import {
   CheckCircleIcon,
   ClockIcon,
   TrophyIcon,
-  TrendingUpIcon,
   TargetIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';

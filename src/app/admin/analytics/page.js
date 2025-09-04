@@ -1,6 +1,7 @@
 'use client';
 // app/admin/analytics/page.js
 import { useState, useEffect } from 'react';
+import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import Navigation from '../../../components/Navigation';
@@ -10,7 +11,6 @@ import {
   BookOpenIcon,
   ChatBubbleLeftRightIcon,
   EyeIcon,
-  TrendingUpIcon,
   ExclamationTriangleIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';

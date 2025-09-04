@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import { 
   AcademicCapIcon, 
@@ -84,7 +85,7 @@ export default function AboutPage() {
             About <span className="text-blue-500">SSC Exam Pro</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-4xl mx-auto">
-            We're dedicated to revolutionizing SSC exam preparation by providing students with 
+            We&apos;re dedicated to revolutionizing SSC exam preparation by providing students with 
             comprehensive tools, resources, and support to achieve their academic goals.
           </p>
         </motion.div>
@@ -179,7 +180,7 @@ export default function AboutPage() {
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 className="text-xl font-semibold text-white mb-3">🤝 Community Support</h3>
                 <p className="text-gray-400">
-                  Connect with fellow SSC students, share experiences, and learn from each other's 
+                  Connect with fellow SSC students, share experiences, and learn from each other&apos;s 
                   study strategies and exam preparation tips.
                 </p>
               </div>
@@ -319,21 +320,21 @@ export default function AboutPage() {
             Join thousands of students who are already using SSC Exam Pro to ace their exams!
           </p>
           <div className="space-x-4">
-            <a
+            <Link
               href="/exams"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-200 inline-block"
             >
               Get Started
-            </a>
-            <a
+            </Link>
+            <Link
               href="/blogs"
               className="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-200 inline-block"
             >
               Explore Community
-            </a>
+            </Link>
           </div>
         </motion.div>
       </main>
     </div>
   );
-} 
+}
