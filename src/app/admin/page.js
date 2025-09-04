@@ -1,5 +1,5 @@
 'use client';
-
+{/**app/adimn/page.js */}
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -229,7 +229,7 @@ export default function AdminPage() {
                         <p className="text-gray-300 line-clamp-2">
                           {blog.content.substring(0, 200)}...
                         </p>
-                      </div>
+                      </div> 
                       
                       <div className="flex items-center space-x-2 ml-4">
                         <button

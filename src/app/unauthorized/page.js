@@ -1,5 +1,5 @@
 'use client';
-
+// app/unauthorize/page.js
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../../components/Navigation';

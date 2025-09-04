@@ -10,7 +10,7 @@ import {
   BookOpenIcon,
   UserGroupIcon,
   StarIcon,
-  RocketIcon,
+  RocketLaunchIcon, // Fixed: was RocketIcon
   ShieldCheckIcon,
   LightBulbIcon,
   CogIcon,
@@ -25,8 +25,10 @@ export default function HomePage() {
   const { user, userRole, userData, hasPermission, isRole, isAtLeastRole } = useAuth();
   const [motivationalQuote, setMotivationalQuote] = useState('');
   const [quoteLoading, setQuoteLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false); // Fix hydration mismatch
 
   useEffect(() => {
+    setIsClient(true); // Fix hydration mismatch
     fetchMotivationalQuote();
   }, []);
 
@@ -41,6 +43,11 @@ export default function HomePage() {
       setQuoteLoading(false);
     }
   };
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return null;
+  }
 
   // Guest Landing Page
   const GuestLanding = () => (
@@ -295,7 +302,7 @@ export default function HomePage() {
       >
         <div className="flex justify-center mb-6">
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-full">
-            <RocketIcon className="h-12 w-12 text-white" />
+            <RocketLaunchIcon className="h-12 w-12 text-white" />
           </div>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">

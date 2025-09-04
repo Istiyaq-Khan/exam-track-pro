@@ -13,7 +13,7 @@ import {
   HeartIcon,
   InformationCircleIcon,
   ShieldCheckIcon,
-  RocketIcon,
+  RocketLaunchIcon, // Fixed: was RocketIcon
   ChartBarIcon,
   CogIcon
 } from '@heroicons/react/24/outline';
@@ -36,7 +36,7 @@ export default function Navigation() {
   // Add role-specific navigation items
   if (isAtLeastRole('advanced')) {
     navigationItems.push(
-      { name: 'Advanced', href: '/advanced/dashboard', icon: RocketIcon, public: false, roles: ['advanced', 'admin'] }
+      { name: 'Advanced', href: '/advanced/dashboard', icon: RocketLaunchIcon, public: false, roles: ['advanced', 'admin'] }
     );
   }
 
@@ -228,4 +228,4 @@ export default function Navigation() {
       </AnimatePresence>
     </nav>
   );
-} 
+}

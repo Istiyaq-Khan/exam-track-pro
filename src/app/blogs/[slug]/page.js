@@ -1,4 +1,5 @@
 'use client';
+// app/blogs/[slug]/page.js
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -22,7 +23,9 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBlog();
+    if (slug) {
+      fetchBlog();
+    }
   }, [slug]);
 
   const fetchBlog = async () => {
@@ -31,6 +34,8 @@ export default function BlogPage() {
       if (response.ok) {
         const data = await response.json();
         setBlog(data);
+      } else {
+        console.error('Failed to fetch blog:', response.statusText);
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
@@ -159,23 +164,35 @@ export default function BlogPage() {
           <div className="flex items-center justify-between text-sm text-gray-400 mb-6">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
+                {blog.authorPhotoURL && (
+                  <img
+                    src={blog.authorPhotoURL}
+                    alt={blog.authorName}
+                    className="h-6 w-6 rounded-full"
+                  />
+                )}
                 <UserIcon className="h-4 w-4" />
                 <span>{blog.authorName}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CalendarIcon className="h-4 w-4" />
-                <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
+                <span>{new Date(blog.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}</span>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleLike}
+                disabled={!user}
                 className={`flex items-center space-x-1 transition-colors duration-200 ${
                   blog.likes.includes(user?.uid) 
                     ? 'text-red-500' 
                     : 'text-gray-400 hover:text-red-500'
-                }`}
+                } ${!user ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 <HeartIcon className="h-5 w-5" />
                 <span>{blog.likes.length}</span>
@@ -195,15 +212,19 @@ export default function BlogPage() {
                 src={blog.image}
                 alt={blog.title}
                 className="w-full h-64 md:h-96 object-cover rounded-lg"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
             </div>
           )}
 
-          {/* Blog Content */}
-          <div className="prose prose-invert max-w-none">
-            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {blog.content}
-            </div>
+          {/* Blog Content - Render HTML */}
+          <div className="prose prose-invert prose-lg max-w-none">
+            <div 
+              className="text-gray-300 leading-relaxed blog-content"
+              dangerouslySetInnerHTML={{ __html: blog.content }}
+            />
           </div>
         </motion.article>
 
@@ -219,13 +240,16 @@ export default function BlogPage() {
           </h2>
 
           {/* Add Comment */}
-          {user && (
+          {user ? (
             <form onSubmit={handleComment} className="mb-8">
               <div className="flex items-start space-x-3">
                 <img
                   src={user.photoURL || '/default-avatar.png'}
                   alt={user.displayName}
                   className="h-10 w-10 rounded-full"
+                  onError={(e) => {
+                    e.target.src = '/default-avatar.png';
+                  }}
                 />
                 <div className="flex-1">
                   <textarea
@@ -233,7 +257,7 @@ export default function BlogPage() {
                     onChange={(e) => setComment(e.target.value)}
                     rows={3}
                     placeholder="Write a comment..."
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     required
                   />
                   <div className="mt-2 flex justify-end">
@@ -247,6 +271,16 @@ export default function BlogPage() {
                 </div>
               </div>
             </form>
+          ) : (
+            <div className="mb-8 text-center py-4 bg-gray-700 rounded-lg">
+              <p className="text-gray-400 mb-2">Please log in to comment</p>
+              <Link
+                href="/login"
+                className="text-blue-400 hover:text-blue-300 font-medium"
+              >
+                Login here
+              </Link>
+            </div>
           )}
 
           {/* Comments List */}
@@ -269,6 +303,9 @@ export default function BlogPage() {
                       src={comment.userPhotoURL || '/default-avatar.png'}
                       alt={comment.userDisplayName}
                       className="h-8 w-8 rounded-full"
+                      onError={(e) => {
+                        e.target.src = '/default-avatar.png';
+                      }}
                     />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
@@ -276,10 +313,16 @@ export default function BlogPage() {
                           {comment.userDisplayName}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(comment.createdAt).toLocaleDateString()}
+                          {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
-                      <p className="text-gray-300">{comment.content}</p>
+                      <p className="text-gray-300 whitespace-pre-wrap">{comment.content}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -303,6 +346,230 @@ export default function BlogPage() {
           </div>
         </motion.div>
       </main>
+
+      {/* Custom CSS for blog content styling */}
+      <style jsx global>{`
+        .blog-content h1,
+        .blog-content h2,
+        .blog-content h3,
+        .blog-content h4,
+        .blog-content h5,
+        .blog-content h6 {
+          margin: 1.5rem 0 0.75rem 0;
+          font-weight: bold;
+          line-height: 1.3;
+        }
+
+        .blog-content h1 {
+          font-size: 2rem;
+          color: #f3f4f6;
+        }
+
+        .blog-content h2 {
+          font-size: 1.75rem;
+          color: #f3f4f6;
+        }
+
+        .blog-content h3 {
+          font-size: 1.5rem;
+          color: #e5e7eb;
+        }
+
+        .blog-content h4 {
+          font-size: 1.25rem;
+          color: #e5e7eb;
+        }
+
+        .blog-content h5 {
+          font-size: 1.1rem;
+          color: #e5e7eb;
+        }
+
+        .blog-content h6 {
+          font-size: 1rem;
+          color: #e5e7eb;
+        }
+
+        .blog-content p {
+          margin: 1rem 0;
+          line-height: 1.7;
+          color: #d1d5db;
+        }
+
+        .blog-content ul,
+        .blog-content ol {
+          margin: 1rem 0;
+          padding-left: 2rem;
+          color: #d1d5db;
+        }
+
+        .blog-content li {
+          margin: 0.5rem 0;
+          line-height: 1.6;
+        }
+
+        .blog-content ul {
+          list-style-type: disc;
+        }
+
+        .blog-content ol {
+          list-style-type: decimal;
+        }
+
+        .blog-content blockquote {
+          margin: 1.5rem 0;
+          padding: 1rem 1.5rem;
+          border-left: 4px solid #3b82f6;
+          background: #1f2937;
+          border-radius: 0.375rem;
+          font-style: italic;
+          color: #e5e7eb;
+        }
+
+        .blog-content strong {
+          font-weight: 700;
+          color: #f9fafb;
+        }
+
+        .blog-content em {
+          font-style: italic;
+          color: #f3f4f6;
+        }
+
+        .blog-content u {
+          text-decoration: underline;
+        }
+
+        .blog-content s {
+          text-decoration: line-through;
+        }
+
+        .blog-content a {
+          color: #3b82f6;
+          text-decoration: underline;
+        }
+
+        .blog-content a:hover {
+          color: #60a5fa;
+        }
+
+        .blog-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.5rem;
+          margin: 1.5rem 0;
+        }
+
+        .blog-content code {
+          background: #374151;
+          color: #f9fafb;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.25rem;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9em;
+        }
+
+        .blog-content pre {
+          background: #1f2937;
+          color: #f9fafb;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin: 1.5rem 0;
+        }
+
+        .blog-content pre code {
+          background: none;
+          padding: 0;
+        }
+
+        .blog-content table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1.5rem 0;
+        }
+
+        .blog-content th,
+        .blog-content td {
+          border: 1px solid #4b5563;
+          padding: 0.75rem;
+          text-align: left;
+        }
+
+        .blog-content th {
+          background: #374151;
+          font-weight: bold;
+          color: #f9fafb;
+        }
+
+        .blog-content td {
+          color: #d1d5db;
+        }
+
+        .blog-content hr {
+          border: none;
+          height: 2px;
+          background: #4b5563;
+          margin: 2rem 0;
+          border-radius: 1px;
+        }
+
+        /* Custom colors for different text colors */
+        .blog-content .ql-color-white { color: #ffffff !important; }
+        .blog-content .ql-color-red { color: #ef4444 !important; }
+        .blog-content .ql-color-orange { color: #f97316 !important; }
+        .blog-content .ql-color-yellow { color: #eab308 !important; }
+        .blog-content .ql-color-green { color: #22c55e !important; }
+        .blog-content .ql-color-blue { color: #3b82f6 !important; }
+        .blog-content .ql-color-purple { color: #a855f7 !important; }
+        .blog-content .ql-color-pink { color: #ec4899 !important; }
+
+        /* Background colors */
+        .blog-content .ql-bg-red { background-color: #ef4444 !important; }
+        .blog-content .ql-bg-orange { background-color: #f97316 !important; }
+        .blog-content .ql-bg-yellow { background-color: #eab308 !important; }
+        .blog-content .ql-bg-green { background-color: #22c55e !important; }
+        .blog-content .ql-bg-blue { background-color: #3b82f6 !important; }
+        .blog-content .ql-bg-purple { background-color: #a855f7 !important; }
+        .blog-content .ql-bg-pink { background-color: #ec4899 !important; }
+
+        /* Text alignment */
+        .blog-content .ql-align-center {
+          text-align: center;
+        }
+
+        .blog-content .ql-align-right {
+          text-align: right;
+        }
+
+        .blog-content .ql-align-justify {
+          text-align: justify;
+        }
+
+        /* Indentation */
+        .blog-content .ql-indent-1 {
+          padding-left: 3rem;
+        }
+
+        .blog-content .ql-indent-2 {
+          padding-left: 6rem;
+        }
+
+        .blog-content .ql-indent-3 {
+          padding-left: 9rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .blog-content h1 { font-size: 1.75rem; }
+          .blog-content h2 { font-size: 1.5rem; }
+          .blog-content h3 { font-size: 1.25rem; }
+          
+          .blog-content .ql-indent-1 { padding-left: 1.5rem; }
+          .blog-content .ql-indent-2 { padding-left: 3rem; }
+          .blog-content .ql-indent-3 { padding-left: 4.5rem; }
+        }
+      `}</style>
     </div>
   );
-} 
+}
