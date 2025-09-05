@@ -1,6 +1,6 @@
 'use client';
 // app/admin/analytics/page.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -66,13 +66,7 @@ export default function AdminAnalyticsPage() {
     ]
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchAnalytics();
-    }
-  }, [user, timeRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       // Fetch real analytics data
       const response = await fetch(`/api/admin/analytics?range=${timeRange}`);
@@ -109,7 +103,13 @@ export default function AdminAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAnalytics();
+    }
+  }, [user, fetchAnalytics]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -125,7 +125,7 @@ export default function AdminAnalyticsPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-400">You don't have permission to access analytics.</p>
+          <p className="text-gray-400">You don&apos;t have permission to access analytics.</p>
         </div>
       </div>
     );
@@ -284,7 +284,7 @@ export default function AdminAnalyticsPage() {
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-              <TrendingUpIcon className="h-6 w-6 mr-2 text-green-500" />
+              <ArrowTrendingUpIcon className="h-6 w-6 mr-2 text-green-500" />
               Engagement Metrics
             </h3>
             
